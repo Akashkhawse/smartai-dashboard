@@ -1,6 +1,6 @@
 from flask import Flask, render_template, jsonify, request, Response
 import psutil, platform, datetime
-import cv2
+#import cv2
 
 app = Flask(__name__)
 
@@ -35,7 +35,7 @@ def health():
     }
     return jsonify(data)
 
-
+"""
 # Camera stream generator with Motion/Face Detection
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
@@ -79,7 +79,7 @@ latest_alert = "✅ No alerts"
 def get_alert():
     return jsonify({"alert": latest_alert})
     
-
+"""
 # 🎤 Voice Assistant API
 @app.route("/assistant", methods=["POST"])
 def assistant():
