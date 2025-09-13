@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>🚀 SmartAI Remote Dashboard</title>
+    <style>
+        * {
+            margin: 0px;
+            padding: 0px;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            background-color: #06181f;
+        }
+
+        h1 {
+            color: #a0290b;
+            text-align: center;
+            text-shadow: 2px 5px 3px #736e78;
+        }
+
+        h2 {
+            margin-top: 20px;
+            color: #f9b088;
+        }
+
+        p {
+            font-size: 18px;
+            color: #00eaffe2;
+        }
+
+        span {
+            font-size: 22px;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .status {
+            margin-top: 15px;
+            font-size: 18px;
+            color: rgb(4, 252, 4);
+        }
+
+        /* 🔹 Tabs Style */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 12px 25px;
+            border: none;
+            background: #ae92927d;
+            margin-right: 5px;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            font-size: 16px;
+            border: 1px solid #ff00008d;
+        }
+
+        .tab-btn.active {
+            background: #0f09019c;
+            color: rgb(221, 202, 158);
+            border: 1px solid rgba(192, 163, 173, 0.283);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background: rgba(239, 239, 239, 0.73);
+            border: 1px solid #ff0303;
+            border-radius: 8px 8px 8px 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+            background-color: rgba(71, 66, 66, 0.497);
+            color: #aace093a;
+        }
+
+        .outerside {
+            background-color: #000000;
+            border: 1px solid red;
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: #2c3e50;
+            color: rgba(55, 190, 14, 0.706);
+            border: none;
+            border: 1px solid rgba(0, 131, 0, 0.633);
+        }
+
+        button:hover {
+            background-color: #1a1a1a;
+            color: #fff;
+            border-color: #00eaff;
+            box-shadow: 0 0 15px #00ff00aa;
+        }
+
+        /* Camera style */
+        .camera-frame {
+            border: 1px solid #ff0000;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+    </style>
+
+    <script>
+        // 🔹 Tab switching logic
+        function openTab(tabName) {
+            document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
+            document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+            document.getElementById(tabName).classList.add("active");
+            document.getElementById(tabName + "-btn").classList.add("active");
+        }
+
+        // 🔹 Health Data Auto Refresh
+        async function refreshData() {
+            const res = await fetch("/health");
+            const data = await res.json();
+            document.getElementById("cpu").innerText = data.cpu_percent + "%";
+            document.getElementById("memory").innerText = data.memory + "%";
+            document.getElementById("disk").innerText = data.disk + "%";
+            document.getElementById("time").innerText = data.time;
+            document.getElementById("alert").innerText = data.alert;
+        }
+        setInterval(refreshData, 5000);
+        window.onload = function () {
+            refreshData();
+            openTab('health'); // Default tab
+        }
+
+        // 🔹 Voice Assistant
+        function startListening() {
+            const recognition = new webkitSpeechRecognition();
+            recognition.lang = "en-US";
+            recognition.start();
+
+            recognition.onresult = async function (event) {
+                const userText = event.results[0][0].transcript;
+                document.getElementById("userSpeech").innerText = userText;
+
+                const res = await fetch("/assistant", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: userText })
+                });
+                const data = await res.json();
+                document.getElementById("aiReply").innerText = data.reply;
+
+                let msg = new SpeechSynthesisUtterance(data.reply);
+                window.speechSynthesis.speak(msg);
+            };
+        }
+
+        // 🔹 Camera Alert Auto Refresh
+        async function refreshCameraAlert() {
+            const res = await fetch("/get_alert");
+            const data = await res.json();
+            document.getElementById("camera-alert").innerText = data.alert;
+        }
+        setInterval(refreshCameraAlert, 5000);
+
+        // 🔹 Toggle Devices (Light/Fan)
+        async function toggleDevice(device) {
+            const res = await fetch(`/toggle/${device}`, { method: "POST" });
+            const data = await res.json();
+            if (data[device]) {
+                document.getElementById(`${device}-status`).innerText = data[device];
+            }
+        }
+        // 🔹 Live Alerts (Health + Camera)
+        async function refreshSmartAlerts() {
+            // Health alerts
+            const healthRes = await fetch("/health");
+            const healthData = await healthRes.json();
+            if (healthData.alert && healthData.alert !== "✅ Normal") {
+                document.getElementById("alertBox").innerText = healthData.alert;
+            }
+
+            // Camera alerts
+            const camRes = await fetch("/get_alert");
+            const camData = await camRes.json();
+            if (camData.alert && camData.alert !== "✅ No alerts") {
+                document.getElementById("alertBox").innerText = camData.alert;
+            }
+        }
+        setInterval(refreshSmartAlerts, 5000);
+
+        // 🔹 Live Alerts (Health + Camera with history)
+        async function refreshSmartAlerts() {
+            // Health alerts
+            const healthRes = await fetch("/health");
+            const healthData = await healthRes.json();
+            if (healthData.alert && healthData.alert !== "✅ Normal") {
+                addAlertToBox(healthData.alert);
+            }
+
+            // Camera alerts
+            const camRes = await fetch("/get_alert");
+            const camData = await camRes.json();
+            if (camData.alert && camData.alert !== "✅ No alerts") {
+                addAlertToBox(camData.alert);
+            }
+        }
+
+        // 🔹 Helper function to add alerts in list
+        function addAlertToBox(msg) {
+            const box = document.getElementById("alertBox");
+            const p = document.createElement("p");
+            p.innerText = `${new Date().toLocaleTimeString()} - ${msg}`;
+            box.prepend(p); // Latest alert upar dikhane ke liye
+        }
+
+        setInterval(refreshSmartAlerts, 5000);
+
+
+    </script>
+</head>
+
+<body>
+    <div class="outerside">
+        <h1>🚀 Smart Surveillance AI Powered</h1>
+
+        <!-- 🔹 Tab Buttons -->
+        <div class="tabs">
+            <button id="health-btn" class="tab-btn" onclick="openTab('health')">📊 System Health</button>
+            <button id="assistant-btn" class="tab-btn" onclick="openTab('assistant')">🎤 Voice Assistant</button>
+            <button id="camera-btn" class="tab-btn" onclick="openTab('camera')">📷 Camera</button>
+            <button id="controls-btn" class="tab-btn" onclick="openTab('controls')">💡 Controls</button>
+            <button id="alerts-btn" class="tab-btn" onclick="openTab('alerts')">🚨 Smart Alerts</button>
+        </div>
+
+        <!-- 🔹 Tab Contents -->
+        <div id="health" class="tab-content">
+            <h2>📊 System Health</h2>
+            <p><b>CPU Usage:</b> <span id="cpu">---</span></p>
+            <p><b>Memory Usage:</b> <span id="memory">---</span></p>
+            <p><b>Disk Usage:</b> <span id="disk">---</span></p>
+            <p><b>Last Updated:</b> <span id="time">---</span></p>
+            <p><b>Alert:</b> <span id="alert">---</span></p>
+            <p class="status">Status: ✅ Running</p>
+        </div>
+
+        <div id="assistant" class="tab-content">
+            <h2>🎤 Voice Assistant</h2>
+            <button onclick="startListening()">Speak</button>
+            <p><b>You said:</b> <span id="userSpeech">---</span></p>
+            <p><b>AI reply:</b> <span id="aiReply">---</span></p>
+        </div>
+
+        <div id="camera" class="tab-content">
+            <h2>📷 Camera</h2>
+            <img src="/camera_feed" width="640" height="480" class="camera-frame">
+            <p><b>Camera Alert:</b> <span id="camera-alert">✅ No alerts</span></p>
+        </div>
+
+        <div id="controls" class="tab-content">
+            <h2>💡 Controls</h2>
+            <p><b>Light:</b> <span id="light-status">OFF</span>
+                <button onclick="toggleDevice('light')">Toggle Light</button>
+            </p>
+            <p><b>Fan:</b> <span id="fan-status">OFF</span>
+                <button onclick="toggleDevice('fan')">Toggle Fan</button>
+            </p>
+        </div>
+
+        <div id="alerts" class="tab-content">
+            <h2>🚨 Smart Alerts</h2>
+            <p id="alertBox">No alerts yet ✅</p>
+        </div>
+
+    </div>
+</body>
+
+</html>
