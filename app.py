@@ -36,7 +36,7 @@ def health():
     return jsonify(data)
 
 
-# Camera stream generator with Motion/Face Detection
+'''# Camera stream generator with Motion/Face Detection
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 def generate_frames():
@@ -78,7 +78,7 @@ latest_alert = "✅ No alerts"
 @app.route("/get_alert")
 def get_alert():
     return jsonify({"alert": latest_alert})
-
+'''
 
 # 🎤 Voice Assistant API
 @app.route("/assistant", methods=["POST"])
