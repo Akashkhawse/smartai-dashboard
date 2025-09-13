@@ -1,0 +1,4 @@
+flask
+gunicorn
+psutil
+# opencv-python  # comment for Render deployment
