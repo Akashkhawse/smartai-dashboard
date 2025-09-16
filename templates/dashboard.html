@@ -206,7 +206,7 @@
                 addAlertToBox(healthData.alert);
             }
 
-            // Camera alerts
+            // Camera alerts 
             const camRes = await fetch("/get_alert");
             const camData = await camRes.json();
             if (camData.alert && camData.alert !== "✅ No alerts") {
@@ -214,7 +214,7 @@
             }
         }
 
-        // 🔹 Helper function to add alerts in list
+        // 🔹 Helper function to add alerts in list 
         function addAlertToBox(msg) {
             const box = document.getElementById("alertBox");
             const p = document.createElement("p");
